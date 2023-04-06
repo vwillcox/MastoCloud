@@ -27,6 +27,16 @@ accounts = requests.get('https://mastodon.org/
 
 For example
 
+## Requirements
+
+You need a couple of Python packages and if using a distro like Rasperry Pi Light you may also need to install the PIP tool
+
+```
+sudo apt install python3-pip
+sudo pip3 install matplotlib
+sudo pip3 install wordcloud
+```
+
 ## Running the code
 
 This is designed to be run from the BASH / Command shell with a simple command
