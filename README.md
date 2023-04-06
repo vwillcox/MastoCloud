@@ -13,19 +13,17 @@ NEVER give this key away as people can use it to impersonate you and post to you
 
 ## Ammending the code
 
-You will need to change lines 22 and 28 to your servers API URL
+You will need to change lines 21 to your servers API URL
 
 ```
-accounts = requests.get('https://fosstodon.org/
+api_url = 'https://fosstodon.org/'
 ```
 
 Would change to 
 
 ```
-accounts = requests.get('https://mastodon.org/
+api_url = 'https://mastodon.social/'
 ```
-
-For example
 
 ## Requirements
 
