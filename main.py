@@ -18,14 +18,15 @@ config = vars(args)
 accountname = args.account
 accessToken = args.key
 transparent = args.transparent
+api_url = 'https://fosstodon.org/'
 
-accounts = requests.get('https://fosstodon.org/api/v2/search?q='+accountname+'&resolve=true&limit=1', headers={'Authorization': 'Bearer '+accessToken})
+accounts = requests.get(api_url+'api/v2/search?q='+accountname+'&resolve=true&limit=1', headers={'Authorization': 'Bearer '+accessToken})
 statuses = json.loads(accounts.text)
 
 accountID = (statuses['accounts'][0]['id'])
 
 
-response = requests.get('https://fosstodon.org/api/v1/accounts/'+accountID+'/statuses', headers={'Authorization': 'Bearer '+accessToken})
+response = requests.get(api_url+'api/v1/accounts/'+accountID+'/statuses', headers={'Authorization': 'Bearer '+accessToken})
 statuses = json.loads(response.text)
 
 maskingfilename = args.mask
