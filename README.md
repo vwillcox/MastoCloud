@@ -50,5 +50,5 @@ python3 main.py -m masto.svg.png -o talktech040223-v5.png -a talktech -k <YOURAP
 | -m      | Masking image                | masto.svg.png       |
 | -o      | Output image                 | cloud.png           |
 | -a      | Mastodon Account             | elonmusk            |
-| -k      | API Key                      | <Your access token> |
+| -k      | API Key                      | Your access token   |
 | -t      | Generate a transparent image | yes                 |
