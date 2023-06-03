@@ -78,6 +78,7 @@ stopwords.add('n8aad917bd297f1bdcaddc066f2')
 stopwords.add('b8aad917bd297f1bdcaddc066f2')
 stopwords.add('nofollow')
 stopwords.add('noreferrer')
+stopwords.add('target')
 
 if transparent == "yes":
    twitter_mask= np.array(Image.open(maskingfilename)) #sitr.jpg image name
@@ -89,6 +90,8 @@ if transparent == "yes":
    stopwords=stopwords
    ).generate(words)
    wCloud.to_file(wordcloudfile)
+   
+
 
 else:
    twitter_mask= np.array(Image.open(maskingfilename)) #sitr.jpg image name
@@ -102,4 +105,11 @@ else:
    stopwords=stopwords
    ).generate(words)
    wCloud.to_file(wordcloudfile)
+
+wCloud_strings = 'This image Contains words i''ve used most offten in my toots. Including: '.join(wCloud.words_)
+#print(wCloud_strings)
+filename = "alttext_for_mastocloud.txt"
+with open(filename, "w") as file:
+   file.write(wCloud_strings)
+
 
