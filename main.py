@@ -106,10 +106,12 @@ else:
    ).generate(words)
    wCloud.to_file(wordcloudfile)
 
-wCloud_strings = 'This image Contains words i''ve used most offten in my toots. Including: '.join(wCloud.words_)
+alt_pretext = 'This image Contains words i''ve used most offten in my toots. Including: ' 
+wCloud_strings = ' '.join(wCloud.words_)
+output_string = alt_pretext + wCloud_strings
 #print(wCloud_strings)
 filename = "alttext_for_mastocloud.txt"
 with open(filename, "w") as file:
-   file.write(wCloud_strings)
+   file.write(output_string)
 
 
