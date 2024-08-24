@@ -52,3 +52,7 @@ python3 main.py -m masto.svg.png -o talktech040223-v5.png -a talktech -k <YOURAP
 | -a      | Mastodon Account             | elonmusk            |
 | -k      | API Key                      | Your access token   |
 | -t      | Generate a transparent image | yes                 |
+
+### Example
+
+![Current Word Cloud](https://talktech.info/wp-content/uploads/2023/04/talktech.png)
