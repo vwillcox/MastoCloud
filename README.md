@@ -7,6 +7,8 @@ You will require an API account for your Mastodon account.
 
 To work with VENV on the latest Python3 I have added extra instructions below.
 New Autopost switch - post the generated wordcloud straight to your Mastodon status!
+Also the wordcloud is now better. More of your status are pulled in to be added in!
+Overall this is a much nicer version!
 
 ## Setting up your Mastodon account
 
