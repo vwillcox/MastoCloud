@@ -52,6 +52,14 @@ This is designed to be run from the BASH / Command shell with a simple command
 python3 main.py -m masto.svg.png -o talktech040223-v5.png -a talktech -k <YOURAPIKEY> -t yes
 ```
 
+If you would like to run the script and have it post it straight to your Mastodon instance, you can use the autopost.py script as follows:
+
+```
+python3 autopost.py -m masto.svg.png -o talktech040223-v5.png -a talktech -k <YOURAPIKEY> -t yes
+```
+
+This will post the image and add a caption to the post to help others view your post!
+
 ### What are the options
 
 | Command | Meaning                      | Example             |
