@@ -6,6 +6,7 @@ You will require an API account for your Mastodon account.
 ### Updated 25/08/2024 
 
 To work with VENV on the latest Python3 I have added extra instructions below.
+New Autopost switch - post the generated wordcloud straight to your Mastodon status!
 
 ## Setting up your Mastodon account
 
@@ -49,16 +50,12 @@ pip3 install requests
 This is designed to be run from the BASH / Command shell with a simple command
 
 ```
-python3 main.py -m masto.svg.png -o talktech040223-v5.png -a talktech -k <YOURAPIKEY> -t yes
+python3 main.py -m masto.svg.png -o talktech040223-v5.png -a talktech -k <YOURAPIKEY> -t yes -p yes
 ```
 
-If you would like to run the script and have it post it straight to your Mastodon instance, you can use the autopost.py script as follows:
+Using -p yes will post the image and add a caption to the post to help others view your post!
 
-```
-python3 autopost.py -m masto.svg.png -o talktech040223-v5.png -a talktech -k <YOURAPIKEY> -t yes
-```
-
-This will post the image and add a caption to the post to help others view your post!
+Using -p no will just save the Wordcloud and description to the drive and finish!
 
 ### What are the options
 
@@ -69,6 +66,7 @@ This will post the image and add a caption to the post to help others view your 
 | -a      | Mastodon Account             | elonmusk            |
 | -k      | API Key                      | Your access token   |
 | -t      | Generate a transparent image | yes                 |
+| -p      | Post the image to Mastadon   | yes                 |
 
 ### Example
 

@@ -12,37 +12,51 @@ parser.add_argument("-m", "--mask", help="Masking Image to use", required=True)
 parser.add_argument("-o", "--output", help="Output File Name", required=True)
 parser.add_argument("-k", "--key", help="API Access Token", required=True)
 parser.add_argument("-t", "--transparent", help="Tansparent Image", required=True)
+parser.add_argument("-p", "--post", help="Auto post?", required=True)
 args = parser.parse_args()
 config = vars(args)
 
 accountname = args.account
 accessToken = args.key
 transparent = args.transparent
+auto_post = args.post
+
 api_url = 'https://fosstodon.org/'
+headers = {'Authorization': f'Bearer {accessToken}'}
+url_account = f'{api_url}api/v1/accounts/verify_credentials'
 
-accounts = requests.get(api_url+'api/v2/search?q='+accountname+'&resolve=true&limit=1', headers={'Authorization': 'Bearer '+accessToken})
-statuses = json.loads(accounts.text)
+response_account = requests.get(url_account, headers=headers)
 
-accountID = (statuses['accounts'][0]['id'])
+account_info = response_account.json()
+account_id = account_info['id']
 
+def limit_string_length(input_string, limit=1500):
+    return input_string[:limit]
 
-response = requests.get(api_url+'api/v1/accounts/'+accountID+'/statuses', headers={'Authorization': 'Bearer '+accessToken})
-statuses = json.loads(response.text)
+def get_statuses():
+   url_statuses = f'{api_url}api/v1/accounts/{account_id}/statuses'
+   params = {
+      'limit': 1000
+   }
+
+   statuses = []
+
+   while True:
+      response = requests.get(url_statuses, headers=headers, params=params)
+      response_data = response.json()
+      if not response_data:
+         break
+      statuses.extend(response_data)
+      params['max_id'] = int(response_data[-1]['id']) - 1
+   return statuses
+
+statuses=get_statuses()
+
+texts = [status['content'] for status in statuses]
+
 
 maskingfilename = args.mask
 wordcloudfile = args.output
-
-
-tempwordfile="file.txt"
-f=open (tempwordfile, "w+")
-for status in statuses:
-  f.write(str(status["content"]))
-f.write("\n")
-f.close
-
-f = open(tempwordfile,"r")
-words=f.read()
-f.close()
 
 stopwords = set(STOPWORDS)
 stopwords.add('https')
@@ -80,38 +94,82 @@ stopwords.add('nofollow')
 stopwords.add('noreferrer')
 stopwords.add('target')
 
+text = ' '.join(texts)
+
 if transparent == "yes":
    twitter_mask= np.array(Image.open(maskingfilename)) #sitr.jpg image name
    wCloud= WordCloud(
-   margin=5,
+   margin=2,
    background_color=None,
    mask=twitter_mask,
    mode="RGBA",
-   stopwords=stopwords
-   ).generate(words)
+   stopwords=stopwords,
+   min_font_size=1,
+   max_font_size=20,
+   relative_scaling=1,
+   contour_width=1
+   ).generate(text)
    wCloud.to_file(wordcloudfile)
-   
-
-
 else:
    twitter_mask= np.array(Image.open(maskingfilename)) #sitr.jpg image name
    wCloud= WordCloud(
-   margin=5,
-   #background_color=None,
-   #mode="RGBA",
+   margin=1,
    mask=twitter_mask,
-   contour_width=2,
    contour_color='steelblue',
-   stopwords=stopwords
-   ).generate(words)
+   stopwords=stopwords,
+   contour_width=1
+   ).generate(text)
    wCloud.to_file(wordcloudfile)
 
 alt_pretext = 'This image Contains words i''ve used most offten in my toots. Including: ' 
 wCloud_strings = ' '.join(wCloud.words_)
 output_string = alt_pretext + wCloud_strings
+output_string = limit_string_length(output_string)
 #print(wCloud_strings)
 filename = "alttext_for_mastocloud.txt"
 with open(filename, "w") as file:
    file.write(output_string)
 
 
+if auto_post == 'Yes':
+   status_message = 'This is my latest #WordCloud from my Python Code over on #GitHub https://github.com/vwillcox/MastoCloud #MastoCloud #AutoPost'
+
+   #Upload the image
+
+   media_url = f'{api_url}/api/v2/media'
+   headers = {'Authorization': f'Bearer {accessToken}'}
+   files = {
+       'file': open(wordcloudfile, 'rb')
+   }
+   data = {
+       'description': output_string
+   }
+   print (wordcloudfile)
+   response = requests.post(media_url, headers=headers, files=files, data=data)
+   
+   print(f'Upload response status code: {response.status_code}')
+   print(f'Upload response content: {response.json()}')
+
+
+   if response.status_code == 200:
+       media_id = response.json()['id']
+       print(f'Image uploaded successfully. Media ID: {media_id}')
+
+    # Post the status with the uploaded image
+       status_url = f'{api_url}/api/v1/statuses'
+       print (status_url)
+       data = {
+           'status': status_message,
+           'media_ids[]': [media_id]
+       }
+       response = requests.post(status_url, headers=headers, data=data)
+
+       print(f'Status post response status code: {response.status_code}')
+       print(f'Status post response content: {response.json()}')
+       if response.status_code == 200:
+           print('Status posted successfully!')
+       else:
+           print(f'Error posting status: {response.status_code}')
+   else:
+       print(f'Error uploading image: {response.status_code}')
+   
