@@ -34,6 +34,8 @@ api_url = 'https://mastodon.social/'
 You need a couple of Python packages and if using a distro like Rasperry Pi Light you may also need to install the PIP tool
 
 ```
+git clone https://github.com/vwillcox/MastoCloud.git
+cd MastoCloud
 python -m venv venv
 source venv/bin/activate
 sudo apt install python3-pip
