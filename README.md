@@ -59,6 +59,8 @@ Using -p yes will post the image and add a caption to the post to help others vi
 
 Using -p no will just save the Wordcloud and description to the drive and finish!
 
+Using -s FILENAME allows ignoring more stopwords listed in that file
+
 ### What are the options
 
 | Command | Meaning                      | Example             |
@@ -69,6 +71,7 @@ Using -p no will just save the Wordcloud and description to the drive and finish
 | -k      | API Key                      | Your access token   |
 | -t      | Generate a transparent image | yes                 |
 | -p      | Post the image to Mastadon   | yes                 |
+| -s      | File containing stopwords    | stopwords.txt       |
 
 ### Example
 
