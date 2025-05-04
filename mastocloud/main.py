@@ -1,6 +1,7 @@
 import requests
 import json
 import time, argparse
+from pathlib import Path
 import matplotlib.pyplot as py
 from wordcloud import WordCloud, STOPWORDS
 from PIL import Image
@@ -11,6 +12,7 @@ def main():
     parser.add_argument("-a", "--account", help="Handle to use", required=True)
     parser.add_argument("-m", "--mask", help="Masking Image to use", required=True)
     parser.add_argument("-o", "--output", help="Output File Name", required=True)
+    parser.add_argument("-s", "--stopwords", help="Stopwords File Name", required=False)
     parser.add_argument("-k", "--key", help="API Access Token", required=True)
     parser.add_argument("-t", "--transparent", help="Tansparent Image", required=True)
     parser.add_argument("-p", "--post", help="Auto post?", required=True)
@@ -21,6 +23,7 @@ def main():
     accessToken = args.key
     transparent = args.transparent
     auto_post = args.post
+    load_stopwords = args.stopwords
 
     api_url = 'https://fosstodon.org/'
     headers = {'Authorization': f'Bearer {accessToken}'}
@@ -94,6 +97,14 @@ def main():
     stopwords.add('noreferrer')
     stopwords.add('target')
     stopwords.add('translate')
+
+    if load_stopwords:
+        stopwords_file = Path(args.stopwords)
+        if not stopwords_file.is_file():
+            print(f'ERROR\nStopwords File Not Found: {stopwords_file}')
+            return
+        stopwords.update(stopwords_file.read_text().split())
+
     text = ' '.join(texts)
 
     if transparent == "yes":
