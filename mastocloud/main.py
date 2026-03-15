@@ -187,41 +187,12 @@ def main():
     wordcloudfile = args.output
 
     stopwords = set(STOPWORDS)
-    for word in [
-        'https', 't', 'co', 'https://t.co', 'span', 'href', 'class', 'mention',
-        'hashtag', 'url', 'rel', 'tag', 'tags', 'fosstodon.org', 'fosstodon',
-        'org', 'mstdn', 'p', 'u', 'h', 'card', 'ca', 'br', 'sbb', 'joinin',
-        '_blank', 'noopener', 'ac2c7', 'ac2c7b8aad917bd297f1bdcaddc066f2',
-        'n8aad917bd297f1bdcaddc066f2', 'b8aad917bd297f1bdcaddc066f2',
-        'nofollow', 'noreferrer', 'target', 'translate', 'hachyderm', 'io',
-        'mastodon', 'social', 'ellipsis', 'invisible', 'XjJUbImrWbM', '8XR2RvfZ',
-        'mastodonapp',
-        # HTML tags and attributes
-        'div', 'li', 'ol', 'ul', 'strong', 'em', 'code', 'blockquote',
-        'amp', 'gt', 'lt', 'quot', 'aria', 'label', 'data', 'display', 'none',
-        # URL noise
-        'http', 'www', 'com', 'net', 'html', 'php', 'api',
-        # Common instance names
-        'infosec', 'exchange', 'techhub', 'kolektiva', 'chaos', 'sigmoid',
-        # Short noise tokens
-        's', 'a', 'i', 'e', 'id',
-        # Profanity
-        'fuck', 'fucking', 'fucker', 'fucked', 'fucks',
-        'shit', 'shits', 'shitting', 'shitty',
-        'cunt', 'cunts',
-        'bitch', 'bitches', 'bitching',
-        'bastard', 'bastards',
-        'asshole', 'assholes', 'arse', 'arsehole', 'arseholes',
-        'dick', 'dicks', 'dickhead', 'dickheads',
-        'cock', 'cocks',
-        'piss', 'pissed', 'pissing',
-        'damn', 'damned',
-        'crap', 'crappy',
-        'wank', 'wanker', 'wankers', 'wanking',
-        'twat', 'twats',
-        'bollocks',
-    ]:
-        stopwords.add(word)
+    stopwords_file = Path(__file__).parent / 'stopwords.txt'
+    with open(stopwords_file) as f:
+        for line in f:
+            word = line.split('#')[0].strip()
+            if word:
+                stopwords.add(word)
 
     if args.hashtags:
         for tag in args.hashtags:
