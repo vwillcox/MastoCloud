@@ -11,15 +11,7 @@ git clone https://github.com/vwillcox/MastoCloud.git
 cd MastoCloud
 ```
 
-### 2. Set your Mastodon server
-
-Open `mastocloud/main.py` and update the `api_url` to match your server:
-
-```python
-api_url = 'https://hachyderm.io/'
-```
-
-### 3. Get your API key
+### 2. Get your API key
 
 Go to `https://<your-mastodon-server>/settings/applications` and create an application to get your access token.
 
@@ -27,18 +19,20 @@ For example: `https://hachyderm.io/settings/applications`
 
 > **Never share your API key** — it can be used to post to your account.
 
-### 4. Run it
+### 3. Run it
 
 ```bash
 ./run.sh -a yourhandle -m masto.svg.png -o cloud.png -t no -p No
 ```
 
-The first time you run it, two things happen automatically:
+The first time you run it:
 
 - A Python virtual environment is created and dependencies are installed
-- You will be prompted for your API key, which is saved to a local `.env` file
+- You will be prompted for your **Mastodon server URL** (e.g. `https://hachyderm.io/`)
+- You will be prompted for your **API access token**
+- Both are saved to a local `.env` file automatically
 
-On every subsequent run the key is read from `.env` silently — no need to enter it again.
+On every subsequent run both values are read from `.env` silently — no need to enter them again.
 
 ---
 

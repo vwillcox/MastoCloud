@@ -11,19 +11,36 @@ from dotenv import load_dotenv, set_key
 
 ENV_FILE = Path(__file__).parent.parent / '.env'
 
-def get_api_key():
+def _load_env():
     load_dotenv(ENV_FILE)
+
+def _prompt_and_save(env_var, prompt_text):
+    value = input(prompt_text).strip()
+    if not value:
+        print(f"Error: {env_var} cannot be empty.")
+        raise SystemExit(1)
+    ENV_FILE.touch(mode=0o600)
+    set_key(str(ENV_FILE), env_var, value)
+    print(f"{env_var} saved to {ENV_FILE}")
+    return value
+
+def get_api_key():
+    _load_env()
     key = os.getenv('MASTODON_API_KEY')
     if not key:
         print("No API key found.")
-        key = input("Enter your Mastodon API access token: ").strip()
-        if not key:
-            print("Error: API key cannot be empty.")
-            raise SystemExit(1)
-        ENV_FILE.touch(mode=0o600)
-        set_key(str(ENV_FILE), 'MASTODON_API_KEY', key)
-        print(f"API key saved to {ENV_FILE}")
+        key = _prompt_and_save('MASTODON_API_KEY', "Enter your Mastodon API access token: ")
     return key
+
+def get_server_url():
+    _load_env()
+    url = os.getenv('MASTODON_SERVER_URL')
+    if not url:
+        print("No Mastodon server URL found.")
+        url = _prompt_and_save('MASTODON_SERVER_URL', "Enter your Mastodon server URL (e.g. https://hachyderm.io/): ")
+    if not url.endswith('/'):
+        url += '/'
+    return url
 
 COLOUR_SCHEMES = {
     'default':    {'colormap': None,   'contour_color': 'steelblue'},
@@ -60,7 +77,7 @@ def main():
     auto_post = args.post
     scheme = COLOUR_SCHEMES[args.colour]
 
-    api_url = 'https://hachyderm.io/'
+    api_url = get_server_url()
     headers = {'Authorization': f'Bearer {accessToken}'}
     url_account = f'{api_url}api/v1/accounts/verify_credentials'
 
