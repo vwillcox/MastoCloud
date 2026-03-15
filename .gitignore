@@ -2,6 +2,7 @@ __pycache__/
 *.png
 *.jpg
 *.txt
+!mastocloud/stopwords.txt
 *.pub
 
 # Byte-compiled / optimized / DLL files
