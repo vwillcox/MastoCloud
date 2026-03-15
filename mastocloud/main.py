@@ -1,10 +1,29 @@
 import requests
 import json
 import time, argparse
+import os
+from pathlib import Path
 import matplotlib.pyplot as py
 from wordcloud import WordCloud, STOPWORDS
 from PIL import Image
 import numpy as np
+from dotenv import load_dotenv, set_key
+
+ENV_FILE = Path(__file__).parent.parent / '.env'
+
+def get_api_key():
+    load_dotenv(ENV_FILE)
+    key = os.getenv('MASTODON_API_KEY')
+    if not key:
+        print("No API key found.")
+        key = input("Enter your Mastodon API access token: ").strip()
+        if not key:
+            print("Error: API key cannot be empty.")
+            raise SystemExit(1)
+        ENV_FILE.touch(mode=0o600)
+        set_key(str(ENV_FILE), 'MASTODON_API_KEY', key)
+        print(f"API key saved to {ENV_FILE}")
+    return key
 
 COLOUR_SCHEMES = {
     'default':    {'colormap': None,   'contour_color': 'steelblue'},
@@ -24,7 +43,6 @@ def main():
     parser.add_argument("-a", "--account", help="Handle to use", required=True)
     parser.add_argument("-m", "--mask", help="Masking Image to use", required=True)
     parser.add_argument("-o", "--output", help="Output File Name", required=True)
-    parser.add_argument("-k", "--key", help="API Access Token", required=True)
     parser.add_argument("-t", "--transparent", help="Transparent Image", required=True)
     parser.add_argument("-p", "--post", help="Auto post?", required=True)
     parser.add_argument(
@@ -37,7 +55,7 @@ def main():
     config = vars(args)
 
     accountname = args.account
-    accessToken = args.key
+    accessToken = get_api_key()
     transparent = args.transparent
     auto_post = args.post
     scheme = COLOUR_SCHEMES[args.colour]

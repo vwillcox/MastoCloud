@@ -3,3 +3,4 @@ wordcloud
 requests
 Pillow
 numpy
+python-dotenv

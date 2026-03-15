@@ -1,84 +1,116 @@
 # Wordcloud for Mastodon Accounts
 
-This script will create an image Wordcloud based on your posts on any Mastodon Server that you have an account on.
-You will require an API account for your Mastodon account.
+This script creates a Wordcloud image based on your posts on any Mastodon server.
 
-## Setting up your Mastodon account
+## Quick Start
 
-To get your API Key go to `https://<yourmastohost.com>/settings/applications`
-
-For example if your account is on Hachyderm: `https://hachyderm.io/settings/applications`
-
-NEVER give this key away as people can use it to impersonate you and post to your Mastodon account.
-
-## Amending the code for your server
-
-Open `mastocloud/main.py` and change the `api_url` on line 25 to match your Mastodon server:
-
-```python
-api_url = 'https://hachyderm.io/'
-```
-
-## Requirements and Setup
-
-Clone the repo — that's it. The `run.sh` script handles creating the virtual environment and installing all dependencies automatically.
+### 1. Clone the repo
 
 ```bash
 git clone https://github.com/vwillcox/MastoCloud.git
 cd MastoCloud
 ```
 
-## Running the code
+### 2. Set your Mastodon server
 
-Use the `run.sh` script with your options:
+Open `mastocloud/main.py` and update the `api_url` to match your server:
 
-```bash
-./run.sh -a talktech -m masto.svg.png -o cloud.png -k <YOURAPIKEY> -t yes -p No
+```python
+api_url = 'https://hachyderm.io/'
 ```
 
-On first run it will create a `.venv` folder and install dependencies. Subsequent runs skip straight to generating the wordcloud.
+### 3. Get your API key
 
-## Options
+Go to `https://<your-mastodon-server>/settings/applications` and create an application to get your access token.
 
-| Flag | Long form     | Meaning                       | Example           |
-|------|---------------|-------------------------------|-------------------|
-| `-a` | `--account`   | Mastodon account handle       | `talktech`        |
-| `-m` | `--mask`      | Masking image                 | `masto.svg.png`   |
-| `-o` | `--output`    | Output image filename         | `cloud.png`       |
-| `-k` | `--key`       | API access token              | `your_token_here` |
-| `-t` | `--transparent` | Transparent background      | `yes` / `no`      |
-| `-p` | `--post`      | Auto-post image to Mastodon   | `Yes` / `No`      |
-| `-c` | `--colour`    | Colour scheme (see below)     | `fire`            |
+For example: `https://hachyderm.io/settings/applications`
+
+> **Never share your API key** — it can be used to post to your account.
+
+### 4. Run it
+
+```bash
+./run.sh -a yourhandle -m masto.svg.png -o cloud.png -t no -p No
+```
+
+The first time you run it, two things happen automatically:
+
+- A Python virtual environment is created and dependencies are installed
+- You will be prompted for your API key, which is saved to a local `.env` file
+
+On every subsequent run the key is read from `.env` silently — no need to enter it again.
+
+---
+
+## All Options
+
+| Flag | Long form       | Meaning                      | Example         |
+|------|-----------------|------------------------------|-----------------|
+| `-a` | `--account`     | Your Mastodon handle         | `talktech`      |
+| `-m` | `--mask`        | Masking image for the shape  | `masto.svg.png` |
+| `-o` | `--output`      | Output image filename        | `cloud.png`     |
+| `-t` | `--transparent` | Transparent background       | `yes` / `no`    |
+| `-p` | `--post`        | Auto-post to Mastodon        | `Yes` / `No`    |
+| `-c` | `--colour`      | Colour scheme                | `fire`          |
+
+---
 
 ## Colour Schemes
 
-Pass `-c <name>` to choose a colour scheme. Omitting `-c` uses `default`.
+Pass `-c <name>` to pick a colour scheme. Omitting `-c` uses `default`.
 
-| Name        | Description                  |
-|-------------|------------------------------|
-| `default`   | wordcloud default colours    |
-| `ocean`     | Blues and greens             |
-| `fire`      | Reds, yellows and oranges    |
-| `forest`    | Greens                       |
-| `sunset`    | Red, yellow and blue         |
-| `purple`    | Purples                      |
-| `grayscale` | Grays                        |
-| `rainbow`   | Full spectrum                |
-| `plasma`    | Pink, purple and yellow      |
-| `viridis`   | Blue, green and yellow       |
+| Name        | Description               |
+|-------------|---------------------------|
+| `default`   | Wordcloud default colours |
+| `ocean`     | Blues and greens          |
+| `fire`      | Reds, yellows and oranges |
+| `forest`    | Greens                    |
+| `sunset`    | Red, yellow and blue      |
+| `purple`    | Purples                   |
+| `grayscale` | Grays                     |
+| `rainbow`   | Full spectrum             |
+| `plasma`    | Pink, purple and yellow   |
+| `viridis`   | Blue, green and yellow    |
 
-### Example with a colour scheme
+---
+
+## Examples
+
+Generate a transparent wordcloud with the fire colour scheme:
 
 ```bash
-./run.sh -a talktech -m masto.svg.png -o cloud.png -k <YOURAPIKEY> -t no -p No -c fire
+./run.sh -a talktech -m masto.svg.png -o cloud.png -t yes -p No -c fire
 ```
 
-### Auto-posting
+Generate and auto-post to Mastodon:
 
-Using `-p Yes` will upload the image to your Mastodon account and post it with a caption including alt text.
+```bash
+./run.sh -a talktech -m masto.svg.png -o cloud.png -t no -p Yes -c ocean
+```
 
-Using `-p No` will save the wordcloud image and alt text to disk and exit.
+---
 
-### Example
+## Auto-posting
+
+When `-p Yes` is set, the script will:
+
+1. Upload the generated image to your Mastodon account
+2. Post a status with the image attached
+3. Include auto-generated alt text describing the most common words
+
+When `-p No` is set, the image and alt text are saved locally and the script exits.
+
+---
+
+## Output Files
+
+| File                          | Contents                              |
+|-------------------------------|---------------------------------------|
+| `<output>.png`                | The generated wordcloud image         |
+| `alttext_for_mastocloud.txt`  | Alt text description for the image    |
+
+---
+
+## Example Output
 
 ![Current Word Cloud](https://talktech.info/wp-content/uploads/2023/04/talktech.png)
