@@ -7,6 +7,7 @@ Then open http://localhost:5000 in your browser.
 
 import sys
 import os
+import io
 import json
 import base64
 import subprocess
@@ -336,6 +337,72 @@ input:focus, select:focus, textarea:focus {
     background: var(--accent-dim);
 }
 
+input[type=range] {
+    width: 100%;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.btn-sm {
+    padding: 0.4rem 0.9rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.btn-sm-primary {
+    background: var(--accent);
+    color: #fff;
+}
+
+.btn-sm-primary:hover { background: var(--accent-hover); }
+
+.btn-sm-secondary {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+
+.btn-sm-secondary:hover { border-color: var(--accent); }
+
+.creator-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+}
+
+.mask-compare {
+    display: none;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.mask-compare > div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.mask-compare img {
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    max-height: 150px;
+    object-fit: contain;
+    background: #000;
+}
+
+.mask-compare span {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-align: center;
+}
+
 /* Modal */
 .modal-backdrop {
     display: none;
@@ -525,6 +592,66 @@ input:focus, select:focus, textarea:focus {
                     border:1px solid var(--border); max-height:200px; object-fit:contain;">
     </div>
 
+    <div class="card" style="margin-top:1rem">
+        <p class="section-title">Mask Creator</p>
+        <p style="font-size:0.8rem; color:var(--muted); margin-bottom:0.75rem">
+            Convert any image into a word cloud mask shape.
+        </p>
+
+        <div class="drop-zone" id="creatorDropZone"
+             onclick="document.getElementById('creatorInput').click()"
+             ondragover="onCreatorDragOver(event)"
+             ondragleave="onCreatorDragLeave()"
+             ondrop="onCreatorDrop(event)">
+            <span class="drop-icon">📸</span>
+            Drop source image or click to browse
+            <div class="drop-filename" id="creatorFilename"></div>
+        </div>
+        <input type="file" id="creatorInput" accept="image/*" style="display:none"
+               onchange="onCreatorFile(this.files[0])">
+
+        <div class="field" style="margin-top:0.75rem">
+            <label>Conversion Method</label>
+            <select id="creatorMethod">
+                <option value="auto">Auto-detect</option>
+                <option value="dark">Dark shape on light background</option>
+                <option value="light">Light shape on dark background</option>
+                <option value="alpha">Use transparency (PNG with alpha)</option>
+            </select>
+        </div>
+
+        <div class="field" style="margin-bottom:0.5rem">
+            <label>Threshold: <span id="thresholdVal">128</span></label>
+            <input type="range" min="0" max="255" value="128" id="thresholdSlider"
+                   oninput="document.getElementById('thresholdVal').textContent=this.value">
+        </div>
+
+        <div class="creator-actions">
+            <button type="button" class="btn-sm btn-sm-primary" onclick="createMask()">
+                Create Mask
+            </button>
+            <button type="button" class="btn-sm btn-sm-secondary" id="useMaskBtn"
+                    style="display:none" onclick="useMask()">
+                ✓ Use as Mask
+            </button>
+            <a class="btn-sm btn-sm-secondary" id="downloadMaskBtn"
+               style="display:none; text-decoration:none" download="mask.png">
+                ⬇ Download
+            </a>
+        </div>
+
+        <div class="mask-compare" id="maskCompare">
+            <div>
+                <img id="creatorSourcePreview" src="" alt="Source">
+                <span>Source</span>
+            </div>
+            <div>
+                <img id="creatorMaskPreview" src="" alt="Mask">
+                <span>Generated Mask</span>
+            </div>
+        </div>
+    </div>
+
     <button type="submit" class="btn-generate" id="generateBtn">
         <div class="spinner" id="spinner"></div>
         <span id="btnLabel">⚡ Generate Word Cloud</span>
@@ -557,6 +684,47 @@ input:focus, select:focus, textarea:focus {
 
 </div>
 </main>
+
+<footer style="text-align:center; padding:1rem 2rem; font-size:0.85rem; color:var(--muted);
+               border-top:1px solid var(--border); background:var(--surface);
+               display:flex; align-items:center; justify-content:center; gap:1.5rem;">
+    <a href="https://github.com/vwillcox/MastoCloud" target="_blank" rel="noopener"
+       style="color:var(--muted); text-decoration:none; display:flex; align-items:center; gap:0.4rem;
+              transition:color 0.2s;" onmouseover="this.style.color='var(--text)'"
+       onmouseout="this.style.color='var(--muted)'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57
+                     0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41
+                     -1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815
+                     2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925
+                     0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23
+                     .96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65
+                     .24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925
+                     .435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57
+                     A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+        </svg>
+        vwillcox/MastoCloud
+    </a>
+    <span style="color:var(--border)">|</span>
+    <a href="https://hachyderm.io/@talktech" target="_blank" rel="noopener"
+       style="color:var(--muted); text-decoration:none; display:flex; align-items:center; gap:0.4rem;
+              transition:color 0.2s;" onmouseover="this.style.color='var(--text)'"
+       onmouseout="this.style.color='var(--muted)'">
+        <svg width="18" height="18" viewBox="0 0 216.4 232" fill="currentColor">
+            <path d="M211.8 139.7c-3.2 16.6-28.9 34.8-58.4 38.3-15.4 1.8-30.5 3.5-46.6 2.7
+                     -26.4-1.2-47.2-6.3-47.2-6.3 0 2.6.2 5 .5 7.4 3.5 26.8 26.5 28.4 48.3 29.1
+                     21.9.7 41.4-5.4 41.4-5.4l.9 19.9s-15.3 8.2-42.6 9.7c-15.1.8-33.8-.4-55.6-5.8
+                     C9.8 220.5 1.6 182.2.3 143.3c-.4-10.9-.2-21.2-.2-29.8 0-37.5 24.6-48.5 24.6-48.5
+                     12.4-5.7 33.7-8.1 55.8-8.3h.5c22.2.2 43.5 2.6 55.9 8.3 0 0 24.6 11 24.6 48.5
+                     0 0 .3 27.7-4.7 45.7M178 80.1c0-11-2.8-19.7-8.4-26.2-5.8-6.5-13.4-9.8-22.9-9.8
+                     -10.9 0-19.2 4.2-24.6 12.6l-5.3 8.9-5.3-8.9c-5.4-8.4-13.7-12.6-24.6-12.6
+                     -9.5 0-17.1 3.3-22.9 9.8C58.4 60.4 55.6 69.1 55.6 80.1v50.7h20.1V81.4
+                     c0-11 4.6-16.6 13.8-16.6 10.2 0 15.3 6.6 15.3 19.6v28.4h20V84.4c0-13 5.1-19.6
+                     15.3-19.6 9.2 0 13.8 5.6 13.8 16.6v49.4H178V80.1z"/>
+        </svg>
+        @talktech@hachyderm.io
+    </a>
+</footer>
 
 <!-- ── Settings Modal ─────────────────────────────────────── -->
 <div class="modal-backdrop" id="modalBackdrop" onclick="closeOnBackdrop(event)">
@@ -680,6 +848,72 @@ async function saveSettings() {
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeSettings();
 });
+
+// Mask Creator
+let creatorFile = null;
+
+function onCreatorFile(file) {
+    if (!file) return;
+    creatorFile = file;
+    document.getElementById('creatorFilename').textContent = file.name;
+    document.getElementById('creatorSourcePreview').src = URL.createObjectURL(file);
+    document.getElementById('maskCompare').style.display = 'none';
+    document.getElementById('useMaskBtn').style.display = 'none';
+    document.getElementById('downloadMaskBtn').style.display = 'none';
+}
+
+function onCreatorDragOver(e) {
+    e.preventDefault();
+    document.getElementById('creatorDropZone').classList.add('dragover');
+}
+
+function onCreatorDragLeave() {
+    document.getElementById('creatorDropZone').classList.remove('dragover');
+}
+
+function onCreatorDrop(e) {
+    e.preventDefault();
+    document.getElementById('creatorDropZone').classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) {
+        document.getElementById('creatorInput').files = (() => {
+            const dt = new DataTransfer(); dt.items.add(file); return dt.files;
+        })();
+        onCreatorFile(file);
+    }
+}
+
+async function createMask() {
+    if (!creatorFile) { alert('Please select a source image first.'); return; }
+    const fd = new FormData();
+    fd.append('image', creatorFile);
+    fd.append('method', document.getElementById('creatorMethod').value);
+    fd.append('threshold', document.getElementById('thresholdSlider').value);
+
+    const res = await fetch('/create-mask', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.error) { alert('Error: ' + data.error); return; }
+
+    const src = 'data:image/png;base64,' + data.mask;
+    document.getElementById('creatorMaskPreview').src = src;
+    document.getElementById('maskCompare').style.display = 'flex';
+
+    const dlBtn = document.getElementById('downloadMaskBtn');
+    dlBtn.href = src;
+    dlBtn.style.display = 'inline-flex';
+
+    document.getElementById('useMaskBtn').style.display = 'inline-flex';
+}
+
+async function useMask() {
+    const src = document.getElementById('creatorMaskPreview').src;
+    const blob = await fetch(src).then(r => r.blob());
+    const file = new File([blob], 'mask.png', { type: 'image/png' });
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document.getElementById('maskInput').files = dt.files;
+    showFilename(file);
+}
 
 // Generate
 document.getElementById('cloudForm').addEventListener('submit', async (e) => {
@@ -849,6 +1083,43 @@ def generate():
                 Path(mask_path).unlink()
 
     return Response(stream_with_context(run()), mimetype='application/x-ndjson')
+
+
+@app.route('/create-mask', methods=['POST'])
+def create_mask():
+    from PIL import Image
+    import numpy as np
+
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image provided'}), 400
+
+    img_file = request.files['image']
+    method    = request.form.get('method', 'auto')
+    threshold = int(request.form.get('threshold', 128))
+
+    img = Image.open(img_file)
+
+    if method == 'auto':
+        method = 'alpha' if img.mode == 'RGBA' else 'dark'
+
+    if method == 'alpha':
+        img = img.convert('RGBA')
+        alpha = np.array(img.split()[3])
+        mask_arr = np.where(alpha > threshold, 0, 255).astype(np.uint8)
+    elif method == 'light':
+        gray = np.array(img.convert('L'))
+        mask_arr = np.where(gray > threshold, 0, 255).astype(np.uint8)
+    else:  # dark shape on light background
+        gray = np.array(img.convert('L'))
+        mask_arr = np.where(gray < threshold, 0, 255).astype(np.uint8)
+
+    mask_img = Image.fromarray(mask_arr, 'L')
+    buf = io.BytesIO()
+    mask_img.save(buf, format='PNG')
+    buf.seek(0)
+    img_data = base64.b64encode(buf.read()).decode()
+
+    return jsonify({'mask': img_data})
 
 
 if __name__ == '__main__':
