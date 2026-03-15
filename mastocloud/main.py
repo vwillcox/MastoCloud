@@ -3,6 +3,7 @@ import json
 import re
 import time, argparse
 import os
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 import matplotlib.pyplot as py
 from wordcloud import WordCloud, STOPWORDS
@@ -121,6 +122,7 @@ def main():
 
     def get_hashtag_statuses(hashtags):
         statuses = []
+        one_week_ago = datetime.now(timezone.utc) - timedelta(weeks=1)
         for tag in hashtags:
             tag = tag.lstrip('#')
             url = f'{api_url}api/v1/timelines/tag/{tag}'
@@ -135,8 +137,16 @@ def main():
                     response_data = response.json()
                     if not response_data:
                         break
-                    statuses.extend(response_data)
-                    pbar.update(len(response_data))
+                    excluded_tags = {'mastocloud', 'wordcloud'}
+                    fresh = [s for s in response_data
+                             if datetime.fromisoformat(s['created_at']) >= one_week_ago
+                             and not excluded_tags.intersection(
+                                 t['name'].lower() for t in s.get('tags', [])
+                             )]
+                    statuses.extend(fresh)
+                    pbar.update(len(fresh))
+                    if len(fresh) < len(response_data):
+                        break
                     params['max_id'] = int(response_data[-1]['id']) - 1
 
         return statuses
@@ -154,8 +164,25 @@ def main():
 
     print(f"Total posts fetched: {len(statuses)}")
 
+    def looks_random(word):
+        """Return True if a word looks like a random/gibberish string."""
+        if len(word) < 6:
+            return False
+        # Contains digits mixed with letters
+        if re.search(r'[a-zA-Z]', word) and re.search(r'\d', word):
+            return True
+        # Three or more uppercase letters not at the start (e.g. IICedCFTbG)
+        if sum(1 for c in word[1:] if c.isupper()) >= 3:
+            return True
+        # Very low vowel ratio for longer words (< 20% vowels)
+        vowels = sum(1 for c in word.lower() if c in 'aeiou')
+        if len(word) >= 8 and vowels / len(word) < 0.2:
+            return True
+        return False
+
     texts = [status['content'] for status in statuses]
     text = ' '.join(texts)
+    text = ' '.join(w for w in text.split() if not looks_random(w))
 
     wordcloudfile = args.output
 
@@ -167,6 +194,32 @@ def main():
         '_blank', 'noopener', 'ac2c7', 'ac2c7b8aad917bd297f1bdcaddc066f2',
         'n8aad917bd297f1bdcaddc066f2', 'b8aad917bd297f1bdcaddc066f2',
         'nofollow', 'noreferrer', 'target', 'translate', 'hachyderm', 'io',
+        'mastodon', 'social', 'ellipsis', 'invisible', 'XjJUbImrWbM', '8XR2RvfZ',
+        'mastodonapp',
+        # HTML tags and attributes
+        'div', 'li', 'ol', 'ul', 'strong', 'em', 'code', 'blockquote',
+        'amp', 'gt', 'lt', 'quot', 'aria', 'label', 'data', 'display', 'none',
+        # URL noise
+        'http', 'www', 'com', 'net', 'html', 'php', 'api',
+        # Common instance names
+        'infosec', 'exchange', 'techhub', 'kolektiva', 'chaos', 'sigmoid',
+        # Short noise tokens
+        's', 'a', 'i', 'e', 'id',
+        # Profanity
+        'fuck', 'fucking', 'fucker', 'fucked', 'fucks',
+        'shit', 'shits', 'shitting', 'shitty',
+        'cunt', 'cunts',
+        'bitch', 'bitches', 'bitching',
+        'bastard', 'bastards',
+        'asshole', 'assholes', 'arse', 'arsehole', 'arseholes',
+        'dick', 'dicks', 'dickhead', 'dickheads',
+        'cock', 'cocks',
+        'piss', 'pissed', 'pissing',
+        'damn', 'damned',
+        'crap', 'crappy',
+        'wank', 'wanker', 'wankers', 'wanking',
+        'twat', 'twats',
+        'bollocks',
     ]:
         stopwords.add(word)
 
@@ -178,6 +231,8 @@ def main():
 
     if transparent == "yes":
         wCloud = WordCloud(
+            width=3840,
+            height=2160,
             margin=2,
             background_color=None,
             mask=twitter_mask,
@@ -191,6 +246,8 @@ def main():
     else:
         if twitter_mask is not None:
             wCloud = WordCloud(
+                width=3840,
+                height=2160,
                 margin=1,
                 mask=twitter_mask,
                 contour_color=scheme['contour_color'],
@@ -236,7 +293,7 @@ def main():
             tags_str = ' '.join('#' + t.lstrip('#') for t in args.hashtags)
             top_users = top_contributors(statuses, list(wCloud.words_.keys())[:20])
             mentions = ' '.join(f'@{u}' for u in top_users)
-            status_message = f"Wordcloud for {tags_str} — top contributors: {mentions}\n#MastoCloud #WordCloud https://github.com/vwillcox/MastoCloud #AutoPost"
+            status_message = f"Wordcloud for {tags_str} — top contributors: {mentions}\n#MastoCloud #WordCloud https://github.com/vwillcox/MastoCloud #AutoPost\n{tags_str}"
         else:
             status_message = 'This is my latest #WordCloud from my Python Code over on #GitHub https://github.com/vwillcox/MastoCloud #MastoCloud #AutoPost'
 
