@@ -3,72 +3,81 @@
 This script will create an image Wordcloud based on your posts on any Mastodon Server that you have an account on.
 You will require an API account for your Mastodon account.
 
-### Updated 25/08/2024 
-
-To work with VENV on the latest Python3 I have added extra instructions below.
-New Autopost switch - post the generated wordcloud straight to your Mastodon status!
-Also the wordcloud is now better. More of your status are pulled in to be added in!
-Overall this is a much nicer version!
-
 ## Setting up your Mastodon account
 
-To get your API Key you can go to https://<yourmastohost.com>/settings/applications
+To get your API Key go to `https://<yourmastohost.com>/settings/applications`
 
-For example if your account is on the Fosstodon Servers you would go to https://fosstodon.org/settings/applications
+For example if your account is on Hachyderm: `https://hachyderm.io/settings/applications`
 
 NEVER give this key away as people can use it to impersonate you and post to your Mastodon account.
 
-## Ammending the code
+## Amending the code for your server
 
-You will need to change lines 21 to your servers API URL
+Open `mastocloud/main.py` and change the `api_url` on line 25 to match your Mastodon server:
 
-```
-api_url = 'https://fosstodon.org/'
-```
-
-Would change to 
-
-```
-api_url = 'https://mastodon.social/'
+```python
+api_url = 'https://hachyderm.io/'
 ```
 
 ## Requirements and Setup
 
-You need a couple of Python packages and if using a distro like Rasperry Pi Light you may also need to install the PIP tool
+Clone the repo — that's it. The `run.sh` script handles creating the virtual environment and installing all dependencies automatically.
 
-```
+```bash
 git clone https://github.com/vwillcox/MastoCloud.git
 cd MastoCloud
-python -m venv venv
-source venv/bin/activate
-sudo apt install python3-pip
-pip3 install matplotlib
-pip3 install wordcloud
-pip3 install requests
 ```
 
 ## Running the code
 
-This is designed to be run from the BASH / Command shell with a simple command
+Use the `run.sh` script with your options:
 
+```bash
+./run.sh -a talktech -m masto.svg.png -o cloud.png -k <YOURAPIKEY> -t yes -p No
 ```
-python3 main.py -m masto.svg.png -o talktech040223-v5.png -a talktech -k <YOURAPIKEY> -t yes -p yes
+
+On first run it will create a `.venv` folder and install dependencies. Subsequent runs skip straight to generating the wordcloud.
+
+## Options
+
+| Flag | Long form     | Meaning                       | Example           |
+|------|---------------|-------------------------------|-------------------|
+| `-a` | `--account`   | Mastodon account handle       | `talktech`        |
+| `-m` | `--mask`      | Masking image                 | `masto.svg.png`   |
+| `-o` | `--output`    | Output image filename         | `cloud.png`       |
+| `-k` | `--key`       | API access token              | `your_token_here` |
+| `-t` | `--transparent` | Transparent background      | `yes` / `no`      |
+| `-p` | `--post`      | Auto-post image to Mastodon   | `Yes` / `No`      |
+| `-c` | `--colour`    | Colour scheme (see below)     | `fire`            |
+
+## Colour Schemes
+
+Pass `-c <name>` to choose a colour scheme. Omitting `-c` uses `default`.
+
+| Name        | Description                  |
+|-------------|------------------------------|
+| `default`   | wordcloud default colours    |
+| `ocean`     | Blues and greens             |
+| `fire`      | Reds, yellows and oranges    |
+| `forest`    | Greens                       |
+| `sunset`    | Red, yellow and blue         |
+| `purple`    | Purples                      |
+| `grayscale` | Grays                        |
+| `rainbow`   | Full spectrum                |
+| `plasma`    | Pink, purple and yellow      |
+| `viridis`   | Blue, green and yellow       |
+
+### Example with a colour scheme
+
+```bash
+./run.sh -a talktech -m masto.svg.png -o cloud.png -k <YOURAPIKEY> -t no -p No -c fire
 ```
 
-Using -p yes will post the image and add a caption to the post to help others view your post!
+### Auto-posting
 
-Using -p no will just save the Wordcloud and description to the drive and finish!
+Using `-p Yes` will upload the image to your Mastodon account and post it with a caption including alt text.
 
-### What are the options
-
-| Command | Meaning                      | Example             |
-|---------|------------------------------|---------------------|
-| -m      | Masking image                | masto.svg.png       |
-| -o      | Output image                 | cloud.png           |
-| -a      | Mastodon Account             | elonmusk            |
-| -k      | API Key                      | Your access token   |
-| -t      | Generate a transparent image | yes                 |
-| -p      | Post the image to Mastadon   | yes                 |
+Using `-p No` will save the wordcloud image and alt text to disk and exit.
 
 ### Example
 
