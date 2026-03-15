@@ -6,14 +6,33 @@ from wordcloud import WordCloud, STOPWORDS
 from PIL import Image
 import numpy as np
 
+COLOUR_SCHEMES = {
+    'default':    {'colormap': None,   'contour_color': 'steelblue'},
+    'ocean':      {'colormap': 'ocean',          'contour_color': 'navy'},
+    'fire':       {'colormap': 'hot',            'contour_color': 'darkred'},
+    'forest':     {'colormap': 'Greens',         'contour_color': 'darkgreen'},
+    'sunset':     {'colormap': 'RdYlBu_r',       'contour_color': 'orangered'},
+    'purple':     {'colormap': 'Purples',         'contour_color': 'indigo'},
+    'grayscale':  {'colormap': 'gray',           'contour_color': 'dimgray'},
+    'rainbow':    {'colormap': 'hsv',            'contour_color': 'black'},
+    'plasma':     {'colormap': 'plasma',         'contour_color': 'purple'},
+    'viridis':    {'colormap': 'viridis',        'contour_color': 'teal'},
+}
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-a", "--account", help="Handle to use", required=True)
     parser.add_argument("-m", "--mask", help="Masking Image to use", required=True)
     parser.add_argument("-o", "--output", help="Output File Name", required=True)
     parser.add_argument("-k", "--key", help="API Access Token", required=True)
-    parser.add_argument("-t", "--transparent", help="Tansparent Image", required=True)
+    parser.add_argument("-t", "--transparent", help="Transparent Image", required=True)
     parser.add_argument("-p", "--post", help="Auto post?", required=True)
+    parser.add_argument(
+        "-c", "--colour",
+        help=f"Colour scheme. Choices: {', '.join(COLOUR_SCHEMES)}",
+        choices=COLOUR_SCHEMES.keys(),
+        default='default',
+    )
     args = parser.parse_args()
     config = vars(args)
 
@@ -21,14 +40,23 @@ def main():
     accessToken = args.key
     transparent = args.transparent
     auto_post = args.post
+    scheme = COLOUR_SCHEMES[args.colour]
 
-    api_url = 'https://fosstodon.org/'
+    api_url = 'https://hachyderm.io/'
     headers = {'Authorization': f'Bearer {accessToken}'}
     url_account = f'{api_url}api/v1/accounts/verify_credentials'
 
     response_account = requests.get(url_account, headers=headers)
 
+    if response_account.status_code != 200:
+        print(f"Error authenticating: HTTP {response_account.status_code}")
+        print(f"Response: {response_account.json()}")
+        return
+
     account_info = response_account.json()
+    if 'id' not in account_info:
+        print(f"Unexpected response: {account_info}")
+        return
     account_id = account_info['id']
 
     def limit_string_length(input_string, limit=1500):
@@ -94,10 +122,13 @@ def main():
     stopwords.add('noreferrer')
     stopwords.add('target')
     stopwords.add('translate')
+    stopwords.add('hachyderm')
+    stopwords.add('io')
     text = ' '.join(texts)
 
+    twitter_mask = np.array(Image.open(maskingfilename))
+
     if transparent == "yes":
-        twitter_mask = np.array(Image.open(maskingfilename))  # sitr.jpg image name
         wCloud = WordCloud(
             margin=2,
             background_color=None,
@@ -107,19 +138,19 @@ def main():
             min_font_size=1,
             max_font_size=20,
             relative_scaling=1,
-            contour_width=1
+            colormap=scheme['colormap'],
         ).generate(text)
-        wCloud.to_file(wordcloudfile)
     else:
-        twitter_mask = np.array(Image.open(maskingfilename))  # sitr.jpg image name
         wCloud = WordCloud(
             margin=1,
             mask=twitter_mask,
-            contour_color='steelblue',
+            contour_color=scheme['contour_color'],
+            contour_width=1,
             stopwords=stopwords,
-            contour_width=1
+            colormap=scheme['colormap'],
         ).generate(text)
-        wCloud.to_file(wordcloudfile)
+
+    wCloud.to_file(wordcloudfile)
 
     alt_pretext = 'This image Contains words i''ve used most offten in my toots. Including: '
     wCloud_strings = ' '.join(wCloud.words_)
