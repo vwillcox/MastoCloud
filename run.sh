@@ -13,8 +13,12 @@ fi
 source "$VENV_DIR/bin/activate"
 pip install --quiet -r requirements.txt
 
-# Run the wordcloud generator, passing all arguments through
-python -m mastocloud.main "$@"
+# Launch web interface or CLI depending on args
+if [ "$1" = "--web" ]; then
+    python web.py
+else
+    python -m mastocloud.main "$@"
+fi
 
 # Deactivate venv
 deactivate

@@ -21,6 +21,53 @@ For example: `https://hachyderm.io/settings/applications`
 
 ### 3. Run it
 
+There are two ways to use MastoCloud — a **web interface** (recommended) or the **command line**.
+
+---
+
+## Web Interface
+
+The web interface lets you generate word clouds from your browser with no command line needed.
+
+### Starting the web server
+
+```bash
+./run.sh --web
+```
+
+This will:
+
+- Create a Python virtual environment and install dependencies (first run only)
+- Start the web server on `http://localhost:5000`
+- Open your browser automatically
+
+### Using the web interface
+
+**Configure credentials (first time only)**
+
+Click **⚙ Edit Config** in the top-right corner. This opens the `.env` file editor where you set:
+
+```
+MASTODON_API_KEY=your_access_token_here
+MASTODON_SERVER_URL=https://hachyderm.io/
+```
+
+Click **Save** when done. Your credentials are stored locally and never sent anywhere other than your own Mastodon server.
+
+**Generate a word cloud**
+
+1. Choose **Account** or **Hashtags** as the source
+2. Enter your account handle (e.g. `@you@instance.social`) or space-separated hashtags (e.g. `python linux infosec`)
+3. Pick a colour scheme, transparent background option, and whether to auto-post
+4. Optionally drag and drop a mask image to shape the word cloud
+5. Click **⚡ Generate Word Cloud**
+
+The log output streams in real time. When complete, the image appears on the right and can be downloaded with the **⬇ Download Image** button.
+
+---
+
+## Command Line
+
 ```bash
 ./run.sh -a yourhandle -m masto.svg.png -o cloud.png -t no -p No
 ```
