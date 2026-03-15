@@ -108,13 +108,18 @@ header p {
 
 main {
     display: grid;
-    grid-template-columns: 380px 1fr;
+    grid-template-columns: 380px 1fr 300px;
     gap: 1.5rem;
     padding: 1.5rem 2rem;
     flex: 1;
-    max-width: 1400px;
+    max-width: 1600px;
     width: 100%;
     margin: 0 auto;
+}
+
+@media (max-width: 1100px) {
+    main { grid-template-columns: 380px 1fr; }
+    .action-panel { display: none; }
 }
 
 @media (max-width: 900px) {
@@ -239,7 +244,6 @@ input:focus, select:focus, textarea:focus {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    margin-top: 1.25rem;
 }
 
 .btn-generate:hover:not(:disabled) { background: var(--accent-hover); }
@@ -501,6 +505,46 @@ input[type=range] {
     align-self: center;
     display: none;
 }
+
+.post-panel {
+    display: none;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.post-panel textarea {
+    resize: vertical;
+    min-height: 120px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.char-counter {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-align: right;
+}
+
+.char-counter.near-limit { color: #f0a500; }
+.char-counter.over-limit { color: var(--error); }
+
+.post-status {
+    font-size: 0.8rem;
+    padding: 0.45rem 0.65rem;
+    border-radius: 6px;
+    display: none;
+    line-height: 1.4;
+}
+
+.post-status.success {
+    background: rgba(121,189,154,0.15);
+    color: var(--success);
+}
+
+.post-status.error {
+    background: rgba(223,64,90,0.15);
+    color: var(--error);
+}
 </style>
 </head>
 <body>
@@ -541,55 +585,6 @@ input[type=range] {
             <label>Hashtags (space-separated)</label>
             <input type="text" name="hashtags" placeholder="python linux infosec">
         </div>
-    </div>
-
-    <div class="card" style="margin-top:1rem">
-        <p class="section-title">Options</p>
-
-        <div class="grid-2">
-            <div class="field">
-                <label>Colour Scheme</label>
-                <select name="colour">
-                    {% for scheme in colour_schemes %}
-                    <option value="{{ scheme }}">{{ scheme.capitalize() }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="field">
-                <label>Transparent BG</label>
-                <select name="transparent">
-                    <option value="no">No</option>
-                    <option value="yes">Yes</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="field" style="margin-bottom:0">
-            <label>Auto-post to Mastodon</label>
-            <select name="auto_post">
-                <option value="No">No</option>
-                <option value="Yes">Yes</option>
-            </select>
-        </div>
-
-        <hr class="divider">
-
-        <p class="section-title">Mask Image (optional)</p>
-        <div class="drop-zone" id="dropZone"
-             onclick="document.getElementById('maskInput').click()"
-             ondragover="onDragOver(event)"
-             ondragleave="onDragLeave()"
-             ondrop="onDrop(event)">
-            <span class="drop-icon">🖼</span>
-            Drop an image here or click to browse
-            <div class="drop-filename" id="dropFilename"></div>
-        </div>
-        <input type="file" name="mask" id="maskInput" accept="image/*"
-               onchange="showFilename(this.files[0])">
-        <img id="maskPreview" src="" alt="Mask preview"
-             style="display:none; width:100%; margin-top:0.75rem; border-radius:8px;
-                    border:1px solid var(--border); max-height:200px; object-fit:contain;">
     </div>
 
     <div class="card" style="margin-top:1rem">
@@ -652,15 +647,59 @@ input[type=range] {
         </div>
     </div>
 
-    <button type="submit" class="btn-generate" id="generateBtn">
-        <div class="spinner" id="spinner"></div>
-        <span id="btnLabel">⚡ Generate Word Cloud</span>
-    </button>
+    <div class="card" style="margin-top:1rem">
+        <p class="section-title">Options</p>
+
+        <div class="grid-2">
+            <div class="field">
+                <label>Colour Scheme</label>
+                <select name="colour">
+                    {% for scheme in colour_schemes %}
+                    <option value="{{ scheme }}">{{ scheme.capitalize() }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Transparent BG</label>
+                <select name="transparent">
+                    <option value="no">No</option>
+                    <option value="yes">Yes</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="field" style="margin-bottom:0">
+            <label>Auto-post to Mastodon</label>
+            <select name="auto_post">
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+            </select>
+        </div>
+
+        <hr class="divider">
+
+        <p class="section-title">Mask Image (optional)</p>
+        <div class="drop-zone" id="dropZone"
+             onclick="document.getElementById('maskInput').click()"
+             ondragover="onDragOver(event)"
+             ondragleave="onDragLeave()"
+             ondrop="onDrop(event)">
+            <span class="drop-icon">🖼</span>
+            Drop an image here or click to browse
+            <div class="drop-filename" id="dropFilename"></div>
+        </div>
+        <input type="file" name="mask" id="maskInput" accept="image/*"
+               onchange="showFilename(this.files[0])">
+        <img id="maskPreview" src="" alt="Mask preview"
+             style="display:none; width:100%; margin-top:0.75rem; border-radius:8px;
+                    border:1px solid var(--border); max-height:200px; object-fit:contain;">
+    </div>
 
 </form>
 </div>
 
-<!-- ── Right: Output ──────────────────────────────────────── -->
+<!-- ── Middle: Output ─────────────────────────────────────── -->
 <div class="output-panel">
 
     <div class="card" style="padding: 0.75rem 1.25rem;">
@@ -682,6 +721,32 @@ input[type=range] {
         </a>
     </div>
 
+</div>
+
+<!-- ── Right: Actions ─────────────────────────────────────── -->
+<div class="action-panel">
+    <div class="card" style="display:flex; flex-direction:column; gap:1rem; position:sticky; top:1.5rem;">
+        <p class="section-title">Actions</p>
+        <button type="submit" form="cloudForm" class="btn-generate" id="generateBtn">
+            <div class="spinner" id="spinner"></div>
+            <span id="btnLabel">⚡ Generate</span>
+        </button>
+
+        <div class="post-panel" id="postPanel">
+            <hr class="divider" style="margin:0">
+            <p class="section-title">Post to Mastodon</p>
+            <textarea id="postText" name="postText" rows="6"
+                      placeholder="Write your post…"
+                      oninput="updateCharCount()"></textarea>
+            <div class="char-counter" id="charCounter">0 / 500</div>
+            <button type="button" class="btn-sm btn-sm-primary" id="postBtn"
+                    onclick="postToMastodon()"
+                    style="width:100%; padding:0.6rem; font-size:0.9rem">
+                📤 Post to Mastodon
+            </button>
+            <div class="post-status" id="postStatus"></div>
+        </div>
+    </div>
 </div>
 </main>
 
@@ -915,6 +980,51 @@ async function useMask() {
     showFilename(file);
 }
 
+// Post to Mastodon
+function updateCharCount() {
+    const len     = document.getElementById('postText').value.length;
+    const counter = document.getElementById('charCounter');
+    counter.textContent = `${len} / 500`;
+    counter.className   = 'char-counter' + (len > 500 ? ' over-limit' : len > 450 ? ' near-limit' : '');
+}
+
+async function postToMastodon() {
+    const btn    = document.getElementById('postBtn');
+    const status = document.getElementById('postStatus');
+    const text   = document.getElementById('postText').value;
+
+    btn.disabled    = true;
+    btn.textContent = 'Posting…';
+    status.style.display = 'none';
+
+    try {
+        const res = await fetch('/post', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                image_b64: window._lastImageB64 || '',
+                status:    text,
+                alt_text:  window._lastAltText  || '',
+            }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+            status.textContent = '✓ Posted successfully!';
+            status.className   = 'post-status success';
+        } else {
+            status.textContent = 'Error: ' + data.error;
+            status.className   = 'post-status error';
+        }
+    } catch (err) {
+        status.textContent = 'Error: ' + err.message;
+        status.className   = 'post-status error';
+    } finally {
+        status.style.display = 'block';
+        btn.disabled    = false;
+        btn.textContent = '📤 Post to Mastodon';
+    }
+}
+
 // Generate
 document.getElementById('cloudForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -930,6 +1040,8 @@ document.getElementById('cloudForm').addEventListener('submit', async (e) => {
     label.textContent = 'Generating…';
     terminal.innerHTML = '';
     imagePanel.style.display = 'none';
+    document.getElementById('postPanel').style.display = 'none';
+    document.getElementById('postStatus').style.display = 'none';
     setStatus('running', 'Generating…');
 
     try {
@@ -967,6 +1079,23 @@ document.getElementById('cloudForm').addEventListener('submit', async (e) => {
                     document.getElementById('downloadBtn').href = src;
                     imagePanel.style.display = 'flex';
                     setStatus('done', 'Done!');
+                    window._lastImageB64 = msg.data;
+                    window._lastAltText  = msg.alt_text || '';
+                    const autoPost = document.querySelector('select[name="auto_post"]').value;
+                    if (autoPost === 'No') {
+                        const mode     = document.getElementById('modeInput').value;
+                        const hashtags = document.querySelector('input[name="hashtags"]').value.trim();
+                        let defaultText;
+                        if (mode === 'hashtag' && hashtags) {
+                            const tags = hashtags.split(/\s+/).map(t => '#' + t.replace(/^#/, '')).join(' ');
+                            defaultText = `Wordcloud for ${tags}\n#MastoCloud #WordCloud https://github.com/vwillcox/MastoCloud`;
+                        } else {
+                            defaultText = 'This is my latest #WordCloud from my Python Code over on #GitHub https://github.com/vwillcox/MastoCloud #MastoCloud';
+                        }
+                        document.getElementById('postText').value = defaultText;
+                        updateCharCount();
+                        document.getElementById('postPanel').style.display = 'flex';
+                    }
                 } else if (msg.type === 'error') {
                     appendLog('ERROR: ' + msg.text);
                     setStatus('error', 'Failed');
@@ -1073,7 +1202,11 @@ def generate():
             if process.returncode == 0 and Path(output_path).exists():
                 with open(output_path, 'rb') as f:
                     img_data = base64.b64encode(f.read()).decode()
-                yield json.dumps({'type': 'image', 'data': img_data}) + '\n'
+                alt_text = ''
+                alt_file = PROJECT_ROOT / 'alttext_for_mastocloud.txt'
+                if alt_file.exists():
+                    alt_text = alt_file.read_text()
+                yield json.dumps({'type': 'image', 'data': img_data, 'alt_text': alt_text}) + '\n'
             else:
                 yield json.dumps({'type': 'error', 'text': 'Generation failed — check the log above.'}) + '\n'
         finally:
@@ -1120,6 +1253,49 @@ def create_mask():
     img_data = base64.b64encode(buf.read()).decode()
 
     return jsonify({'mask': img_data})
+
+
+@app.route('/post', methods=['POST'])
+def post_to_mastodon():
+    import requests as req
+    load_dotenv(ENV_FILE, override=True)
+
+    data       = request.get_json()
+    image_b64  = data.get('image_b64', '')
+    status_text = data.get('status', '')
+    alt_text   = data.get('alt_text', '')
+
+    api_key    = os.getenv('MASTODON_API_KEY', '')
+    server_url = os.getenv('MASTODON_SERVER_URL', '')
+
+    if not api_key or not server_url:
+        return jsonify({'ok': False, 'error': 'API key or server URL not configured — use Edit Config'})
+
+    if not server_url.endswith('/'):
+        server_url += '/'
+
+    headers = {'Authorization': f'Bearer {api_key}'}
+
+    img_bytes = base64.b64decode(image_b64)
+    resp = req.post(
+        f'{server_url}api/v2/media',
+        headers=headers,
+        files={'file': ('wordcloud.png', img_bytes, 'image/png')},
+        data={'description': alt_text[:1500]},
+    )
+    if resp.status_code not in (200, 202):
+        return jsonify({'ok': False, 'error': f'Image upload failed: HTTP {resp.status_code}'})
+
+    media_id = resp.json()['id']
+
+    resp = req.post(
+        f'{server_url}api/v1/statuses',
+        headers=headers,
+        data={'status': status_text, 'media_ids[]': [media_id]},
+    )
+    if resp.status_code == 200:
+        return jsonify({'ok': True})
+    return jsonify({'ok': False, 'error': f'Post failed: HTTP {resp.status_code}'})
 
 
 if __name__ == '__main__':
