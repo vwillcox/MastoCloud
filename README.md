@@ -64,6 +64,24 @@ Click **Save** when done. Your credentials are stored locally and never sent any
 
 The log output streams in real time. When complete, the image appears on the right and can be downloaded with the **⬇ Download Image** button.
 
+**Create a mask image**
+
+The **Mask Creator** section lets you convert any image into a mask that shapes your word cloud:
+
+1. Drop or browse for a source image (PNG, JPG, etc.)
+2. Choose a conversion method:
+
+| Method | When to use |
+|--------|-------------|
+| Auto-detect | Tries alpha channel first, falls back to dark-on-light |
+| Dark shape on light background | Logo or silhouette on a white/light background |
+| Light shape on dark background | White or light shape on a dark background |
+| Use transparency (PNG with alpha) | PNG with a transparent background |
+
+3. Adjust the **Threshold** slider (0–255) to fine-tune which pixels become part of the mask shape
+4. Click **Create Mask** — a side-by-side preview of the source and generated mask is shown
+5. Click **✓ Use as Mask** to set it as the mask for generation, or **⬇ Download** to save it
+
 ---
 
 ## Command Line
