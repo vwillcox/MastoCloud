@@ -38,14 +38,17 @@ On every subsequent run both values are read from `.env` silently — no need to
 
 ## All Options
 
-| Flag | Long form       | Meaning                      | Example         |
-|------|-----------------|------------------------------|-----------------|
-| `-a` | `--account`     | Your Mastodon handle         | `talktech`      |
-| `-m` | `--mask`        | Masking image for the shape  | `masto.svg.png` |
-| `-o` | `--output`      | Output image filename        | `cloud.png`     |
-| `-t` | `--transparent` | Transparent background       | `yes` / `no`    |
-| `-p` | `--post`        | Auto-post to Mastodon        | `Yes` / `No`    |
-| `-c` | `--colour`      | Colour scheme                | `fire`          |
+`-a` and `-H` are mutually exclusive — use one or the other.
+
+| Flag | Long form       | Meaning                                        | Example                    |
+|------|-----------------|------------------------------------------------|----------------------------|
+| `-a` | `--account`     | Generate from a user account handle            | `talktech`                 |
+| `-H` | `--hashtags`    | Generate from one or more hashtags             | `infosec security python`  |
+| `-m` | `--mask`        | Masking image for the shape (optional)         | `masto.svg.png`            |
+| `-o` | `--output`      | Output image filename                          | `cloud.png`                |
+| `-t` | `--transparent` | Transparent background                         | `yes` / `no`               |
+| `-p` | `--post`        | Auto-post to Mastodon                          | `Yes` / `No`               |
+| `-c` | `--colour`      | Colour scheme                                  | `fire`                     |
 
 ---
 
@@ -70,16 +73,22 @@ Pass `-c <name>` to pick a colour scheme. Omitting `-c` uses `default`.
 
 ## Examples
 
-Generate a transparent wordcloud with the fire colour scheme:
+Generate from your own account:
 
 ```bash
 ./run.sh -a talktech -m masto.svg.png -o cloud.png -t yes -p No -c fire
 ```
 
-Generate and auto-post to Mastodon:
+Generate from one or more hashtags:
 
 ```bash
-./run.sh -a talktech -m masto.svg.png -o cloud.png -t no -p Yes -c ocean
+./run.sh -H infosec security -m masto.svg.png -o cloud.png -t no -p No -c plasma
+```
+
+Generate from hashtags and auto-post the result:
+
+```bash
+./run.sh -H python linux -m masto.svg.png -o cloud.png -t no -p Yes -c ocean
 ```
 
 ---

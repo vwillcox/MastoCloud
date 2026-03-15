@@ -1,5 +1,6 @@
 import requests
 import json
+import re
 import time, argparse
 import os
 from pathlib import Path
@@ -8,6 +9,7 @@ from wordcloud import WordCloud, STOPWORDS
 from PIL import Image
 import numpy as np
 from dotenv import load_dotenv, set_key
+from tqdm import tqdm
 
 ENV_FILE = Path(__file__).parent.parent / '.env'
 
@@ -43,12 +45,12 @@ def get_server_url():
     return url
 
 COLOUR_SCHEMES = {
-    'default':    {'colormap': None,   'contour_color': 'steelblue'},
+    'default':    {'colormap': None,             'contour_color': 'steelblue'},
     'ocean':      {'colormap': 'ocean',          'contour_color': 'navy'},
     'fire':       {'colormap': 'hot',            'contour_color': 'darkred'},
     'forest':     {'colormap': 'Greens',         'contour_color': 'darkgreen'},
     'sunset':     {'colormap': 'RdYlBu_r',       'contour_color': 'orangered'},
-    'purple':     {'colormap': 'Purples',         'contour_color': 'indigo'},
+    'purple':     {'colormap': 'Purples',        'contour_color': 'indigo'},
     'grayscale':  {'colormap': 'gray',           'contour_color': 'dimgray'},
     'rainbow':    {'colormap': 'hsv',            'contour_color': 'black'},
     'plasma':     {'colormap': 'plasma',         'contour_color': 'purple'},
@@ -56,12 +58,17 @@ COLOUR_SCHEMES = {
 }
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-a", "--account", help="Handle to use", required=True)
-    parser.add_argument("-m", "--mask", help="Masking Image to use", required=True)
-    parser.add_argument("-o", "--output", help="Output File Name", required=True)
-    parser.add_argument("-t", "--transparent", help="Transparent Image", required=True)
-    parser.add_argument("-p", "--post", help="Auto post?", required=True)
+    parser = argparse.ArgumentParser(description="Generate a wordcloud from Mastodon posts")
+
+    mode_group = parser.add_mutually_exclusive_group(required=True)
+    mode_group.add_argument("-a", "--account", help="Generate from a user account handle")
+    mode_group.add_argument("-H", "--hashtags", nargs='+', metavar="TAG",
+                            help="Generate from one or more hashtags (e.g. -H infosec security python)")
+
+    parser.add_argument("-m", "--mask", help="Masking image to use (omit for rectangular cloud)", default=None)
+    parser.add_argument("-o", "--output", help="Output file name", required=True)
+    parser.add_argument("-t", "--transparent", help="Transparent background (yes/no)", required=True)
+    parser.add_argument("-p", "--post", help="Auto-post to Mastodon (Yes/No)", required=True)
     parser.add_argument(
         "-c", "--colour",
         help=f"Colour scheme. Choices: {', '.join(COLOUR_SCHEMES)}",
@@ -69,9 +76,7 @@ def main():
         default='default',
     )
     args = parser.parse_args()
-    config = vars(args)
 
-    accountname = args.account
     accessToken = get_api_key()
     transparent = args.transparent
     auto_post = args.post
@@ -79,89 +84,97 @@ def main():
 
     api_url = get_server_url()
     headers = {'Authorization': f'Bearer {accessToken}'}
-    url_account = f'{api_url}api/v1/accounts/verify_credentials'
-
-    response_account = requests.get(url_account, headers=headers)
-
-    if response_account.status_code != 200:
-        print(f"Error authenticating: HTTP {response_account.status_code}")
-        print(f"Response: {response_account.json()}")
-        return
-
-    account_info = response_account.json()
-    if 'id' not in account_info:
-        print(f"Unexpected response: {account_info}")
-        return
-    account_id = account_info['id']
 
     def limit_string_length(input_string, limit=1500):
         return input_string[:limit]
 
-    def get_statuses():
-        url_statuses = f'{api_url}api/v1/accounts/{account_id}/statuses'
-        params = {
-            'limit': 1000
-        }
+    def get_account_statuses():
+        url_account = f'{api_url}api/v1/accounts/verify_credentials'
+        response_account = requests.get(url_account, headers=headers)
 
+        if response_account.status_code != 200:
+            print(f"Error authenticating: HTTP {response_account.status_code}")
+            print(f"Response: {response_account.json()}")
+            raise SystemExit(1)
+
+        account_info = response_account.json()
+        if 'id' not in account_info:
+            print(f"Unexpected response: {account_info}")
+            raise SystemExit(1)
+
+        account_id = account_info['id']
+        url_statuses = f'{api_url}api/v1/accounts/{account_id}/statuses'
+        params = {'limit': 40}
         statuses = []
 
-        while True:
-            response = requests.get(url_statuses, headers=headers, params=params)
-            response_data = response.json()
-            if not response_data:
-                break
-            statuses.extend(response_data)
-            params['max_id'] = int(response_data[-1]['id']) - 1
+        with tqdm(desc=f"Fetching posts for @{args.account}", unit=" posts", dynamic_ncols=True) as pbar:
+            while True:
+                response = requests.get(url_statuses, headers=headers, params=params)
+                response_data = response.json()
+                if not response_data:
+                    break
+                statuses.extend(response_data)
+                pbar.update(len(response_data))
+                params['max_id'] = int(response_data[-1]['id']) - 1
+
         return statuses
 
-    statuses = get_statuses()
+    def get_hashtag_statuses(hashtags):
+        statuses = []
+        for tag in hashtags:
+            tag = tag.lstrip('#')
+            url = f'{api_url}api/v1/timelines/tag/{tag}'
+            params = {'limit': 40}
+
+            with tqdm(desc=f"Fetching #{tag}", unit=" posts", dynamic_ncols=True) as pbar:
+                while True:
+                    response = requests.get(url, headers=headers, params=params)
+                    if response.status_code != 200:
+                        print(f"Error fetching #{tag}: HTTP {response.status_code}")
+                        break
+                    response_data = response.json()
+                    if not response_data:
+                        break
+                    statuses.extend(response_data)
+                    pbar.update(len(response_data))
+                    params['max_id'] = int(response_data[-1]['id']) - 1
+
+        return statuses
+
+    if args.hashtags:
+        statuses = get_hashtag_statuses(args.hashtags)
+        alt_pretext = f"Wordcloud of posts tagged {', '.join('#' + t.lstrip('#') for t in args.hashtags)}. Top words: "
+    else:
+        statuses = get_account_statuses()
+        alt_pretext = "This image contains words used most often in my toots. Including: "
+
+    if not statuses:
+        print("No posts found. Exiting.")
+        raise SystemExit(1)
+
+    print(f"Total posts fetched: {len(statuses)}")
 
     texts = [status['content'] for status in statuses]
+    text = ' '.join(texts)
 
-    maskingfilename = args.mask
     wordcloudfile = args.output
 
     stopwords = set(STOPWORDS)
-    stopwords.add('https')
-    stopwords.add('t')
-    stopwords.add('co')
-    stopwords.add('https://t.co')
-    stopwords.add('span')
-    stopwords.add('href')
-    stopwords.add('class')
-    stopwords.add('mention')
-    stopwords.add('hashtag')
-    stopwords.add('url')
-    stopwords.add('rel')
-    stopwords.add('tag')
-    stopwords.add('tags')
-    stopwords.add('fosstodon.org')
-    stopwords.add('fosstodon')
-    stopwords.add('org')
-    stopwords.add('mstdn')
-    stopwords.add('p')
-    stopwords.add('u')
-    stopwords.add('h')
-    stopwords.add('card')
-    stopwords.add('ca')
-    stopwords.add('br')
-    stopwords.add('sbb')
-    stopwords.add('joinin')
-    stopwords.add('_blank')
-    stopwords.add('noopener')
-    stopwords.add('ac2c7')
-    stopwords.add('ac2c7b8aad917bd297f1bdcaddc066f2')
-    stopwords.add('n8aad917bd297f1bdcaddc066f2')
-    stopwords.add('b8aad917bd297f1bdcaddc066f2')
-    stopwords.add('nofollow')
-    stopwords.add('noreferrer')
-    stopwords.add('target')
-    stopwords.add('translate')
-    stopwords.add('hachyderm')
-    stopwords.add('io')
-    text = ' '.join(texts)
+    for word in [
+        'https', 't', 'co', 'https://t.co', 'span', 'href', 'class', 'mention',
+        'hashtag', 'url', 'rel', 'tag', 'tags', 'fosstodon.org', 'fosstodon',
+        'org', 'mstdn', 'p', 'u', 'h', 'card', 'ca', 'br', 'sbb', 'joinin',
+        '_blank', 'noopener', 'ac2c7', 'ac2c7b8aad917bd297f1bdcaddc066f2',
+        'n8aad917bd297f1bdcaddc066f2', 'b8aad917bd297f1bdcaddc066f2',
+        'nofollow', 'noreferrer', 'target', 'translate', 'hachyderm', 'io',
+    ]:
+        stopwords.add(word)
 
-    twitter_mask = np.array(Image.open(maskingfilename))
+    if args.hashtags:
+        for tag in args.hashtags:
+            stopwords.add(tag.lstrip('#').lower())
+
+    twitter_mask = np.array(Image.open(args.mask)) if args.mask else None
 
     if transparent == "yes":
         wCloud = WordCloud(
@@ -176,60 +189,75 @@ def main():
             colormap=scheme['colormap'],
         ).generate(text)
     else:
-        wCloud = WordCloud(
-            margin=1,
-            mask=twitter_mask,
-            contour_color=scheme['contour_color'],
-            contour_width=1,
-            stopwords=stopwords,
-            colormap=scheme['colormap'],
-        ).generate(text)
+        if twitter_mask is not None:
+            wCloud = WordCloud(
+                margin=1,
+                mask=twitter_mask,
+                contour_color=scheme['contour_color'],
+                contour_width=1,
+                stopwords=stopwords,
+                colormap=scheme['colormap'],
+            ).generate(text)
+        else:
+            wCloud = WordCloud(
+                width=3840,
+                height=2160,
+                margin=10,
+                stopwords=stopwords,
+                colormap=scheme['colormap'],
+            ).generate(text)
 
     wCloud.to_file(wordcloudfile)
+    print(f"Wordcloud saved to {wordcloudfile}")
 
-    alt_pretext = 'This image Contains words i''ve used most offten in my toots. Including: '
     wCloud_strings = ' '.join(wCloud.words_)
-    output_string = alt_pretext + wCloud_strings
-    output_string = limit_string_length(output_string)
-    # print(wCloud_strings)
+    output_string = limit_string_length(alt_pretext + wCloud_strings)
     filename = "alttext_for_mastocloud.txt"
     with open(filename, "w") as file:
         file.write(output_string)
 
+    def top_contributors(statuses, top_words, max_users=5):
+        """Return handles of users whose posts contained the most top words."""
+        strip_tags = re.compile(r'<[^>]+>')
+        scores = {}
+        word_set = set(w.lower() for w in top_words)
+        for status in statuses:
+            acct = status['account']['acct']
+            plain = strip_tags.sub(' ', status['content']).lower()
+            words_in_post = set(plain.split())
+            score = len(word_set & words_in_post)
+            if score:
+                scores[acct] = scores.get(acct, 0) + score
+        ranked = sorted(scores, key=scores.get, reverse=True)
+        return ranked[:max_users]
+
     if auto_post == 'Yes':
-        status_message = 'This is my latest #WordCloud from my Python Code over on #GitHub https://github.com/vwillcox/MastoCloud #MastoCloud #AutoPost'
+        if args.hashtags:
+            tags_str = ' '.join('#' + t.lstrip('#') for t in args.hashtags)
+            top_users = top_contributors(statuses, list(wCloud.words_.keys())[:20])
+            mentions = ' '.join(f'@{u}' for u in top_users)
+            status_message = f"Wordcloud for {tags_str} — top contributors: {mentions}\n#MastoCloud #WordCloud https://github.com/vwillcox/MastoCloud #AutoPost"
+        else:
+            status_message = 'This is my latest #WordCloud from my Python Code over on #GitHub https://github.com/vwillcox/MastoCloud #MastoCloud #AutoPost'
 
-        # Upload the image
+        media_url = f'{api_url}api/v2/media'
+        files = {'file': open(wordcloudfile, 'rb')}
+        data = {'description': output_string}
 
-        media_url = f'{api_url}/api/v2/media'
-        headers = {'Authorization': f'Bearer {accessToken}'}
-        files = {
-            'file': open(wordcloudfile, 'rb')
-        }
-        data = {
-            'description': output_string
-        }
-        print(wordcloudfile)
         response = requests.post(media_url, headers=headers, files=files, data=data)
-
         print(f'Upload response status code: {response.status_code}')
-        print(f'Upload response content: {response.json()}')
 
         if response.status_code == 200:
             media_id = response.json()['id']
             print(f'Image uploaded successfully. Media ID: {media_id}')
 
-            # Post the status with the uploaded image
-            status_url = f'{api_url}/api/v1/statuses'
-            print(status_url)
+            status_url = f'{api_url}api/v1/statuses'
             data = {
                 'status': status_message,
                 'media_ids[]': [media_id]
             }
             response = requests.post(status_url, headers=headers, data=data)
-
             print(f'Status post response status code: {response.status_code}')
-            print(f'Status post response content: {response.json()}')
             if response.status_code == 200:
                 print('Status posted successfully!')
             else:
