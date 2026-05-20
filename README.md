@@ -31,8 +31,14 @@ The web interface lets you generate word clouds from your browser with no comman
 
 ### Starting the web server
 
+**Linux/macOS:**
 ```bash
 ./run.sh --web
+```
+
+**Windows:**
+```powershell
+.\run.ps1 --web
 ```
 
 This will:
@@ -86,8 +92,14 @@ The **Mask Creator** section lets you convert any image into a mask that shapes 
 
 ## Command Line
 
+**Linux/macOS:**
 ```bash
 ./run.sh -a yourhandle -m masto.svg.png -o cloud.png -t no -p No
+```
+
+**Windows:**
+```powershell
+.\run.ps1 -a yourhandle -m masto.svg.png -o cloud.png -t no -p No
 ```
 
 The first time you run it:
@@ -140,20 +152,35 @@ Pass `-c <name>` to pick a colour scheme. Omitting `-c` uses `default`.
 
 Generate from your own account:
 
+**Linux/macOS:**
 ```bash
 ./run.sh -a talktech -m masto.svg.png -o cloud.png -t yes -p No -c fire
+```
+**Windows:**
+```powershell
+.\run.ps1 -a talktech -m masto.svg.png -o cloud.png -t yes -p No -c fire
 ```
 
 Generate from one or more hashtags:
 
+**Linux/macOS:**
 ```bash
 ./run.sh -H infosec security -m masto.svg.png -o cloud.png -t no -p No -c plasma
+```
+**Windows:**
+```powershell
+.\run.ps1 -H infosec security -m masto.svg.png -o cloud.png -t no -p No -c plasma
 ```
 
 Generate from hashtags and auto-post the result:
 
+**Linux/macOS:**
 ```bash
 ./run.sh -H python linux -m masto.svg.png -o cloud.png -t no -p Yes -c ocean
+```
+**Windows:**
+```powershell
+.\run.ps1 -H python linux -m masto.svg.png -o cloud.png -t no -p Yes -c ocean
 ```
 
 ---
