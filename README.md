@@ -21,8 +21,85 @@ For example: `https://hachyderm.io/settings/applications`
 
 ### 3. Run it
 
+There are two ways to use MastoCloud — a **web interface** (recommended) or the **command line**.
+
+---
+
+## Web Interface
+
+The web interface lets you generate word clouds from your browser with no command line needed.
+
+### Starting the web server
+
+**Linux/macOS:**
+```bash
+./run.sh --web
+```
+
+**Windows:**
+```powershell
+.\run.ps1 --web
+```
+
+This will:
+
+- Create a Python virtual environment and install dependencies (first run only)
+- Start the web server on `http://localhost:5000`
+- Open your browser automatically
+
+### Using the web interface
+
+**Configure credentials (first time only)**
+
+Click **⚙ Edit Config** in the top-right corner. This opens the `.env` file editor where you set:
+
+```
+MASTODON_API_KEY=your_access_token_here
+MASTODON_SERVER_URL=https://hachyderm.io/
+```
+
+Click **Save** when done. Your credentials are stored locally and never sent anywhere other than your own Mastodon server.
+
+**Generate a word cloud**
+
+1. Choose **Account** or **Hashtags** as the source
+2. Enter your account handle (e.g. `@you@instance.social`) or space-separated hashtags (e.g. `python linux infosec`)
+3. Pick a colour scheme, transparent background option, and whether to auto-post
+4. Optionally drag and drop a mask image to shape the word cloud
+5. Click **⚡ Generate Word Cloud**
+
+The log output streams in real time. When complete, the image appears on the right and can be downloaded with the **⬇ Download Image** button.
+
+**Create a mask image**
+
+The **Mask Creator** section lets you convert any image into a mask that shapes your word cloud:
+
+1. Drop or browse for a source image (PNG, JPG, etc.)
+2. Choose a conversion method:
+
+| Method | When to use |
+|--------|-------------|
+| Auto-detect | Tries alpha channel first, falls back to dark-on-light |
+| Dark shape on light background | Logo or silhouette on a white/light background |
+| Light shape on dark background | White or light shape on a dark background |
+| Use transparency (PNG with alpha) | PNG with a transparent background |
+
+3. Adjust the **Threshold** slider (0–255) to fine-tune which pixels become part of the mask shape
+4. Click **Create Mask** — a side-by-side preview of the source and generated mask is shown
+5. Click **✓ Use as Mask** to set it as the mask for generation, or **⬇ Download** to save it
+
+---
+
+## Command Line
+
+**Linux/macOS:**
 ```bash
 ./run.sh -a yourhandle -m masto.svg.png -o cloud.png -t no -p No
+```
+
+**Windows:**
+```powershell
+.\run.ps1 -a yourhandle -m masto.svg.png -o cloud.png -t no -p No
 ```
 
 The first time you run it:
@@ -75,20 +152,35 @@ Pass `-c <name>` to pick a colour scheme. Omitting `-c` uses `default`.
 
 Generate from your own account:
 
+**Linux/macOS:**
 ```bash
 ./run.sh -a talktech -m masto.svg.png -o cloud.png -t yes -p No -c fire
+```
+**Windows:**
+```powershell
+.\run.ps1 -a talktech -m masto.svg.png -o cloud.png -t yes -p No -c fire
 ```
 
 Generate from one or more hashtags:
 
+**Linux/macOS:**
 ```bash
 ./run.sh -H infosec security -m masto.svg.png -o cloud.png -t no -p No -c plasma
+```
+**Windows:**
+```powershell
+.\run.ps1 -H infosec security -m masto.svg.png -o cloud.png -t no -p No -c plasma
 ```
 
 Generate from hashtags and auto-post the result:
 
+**Linux/macOS:**
 ```bash
 ./run.sh -H python linux -m masto.svg.png -o cloud.png -t no -p Yes -c ocean
+```
+**Windows:**
+```powershell
+.\run.ps1 -H python linux -m masto.svg.png -o cloud.png -t no -p Yes -c ocean
 ```
 
 ---

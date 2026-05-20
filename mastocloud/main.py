@@ -198,7 +198,14 @@ def main():
         for tag in args.hashtags:
             stopwords.add(tag.lstrip('#').lower())
 
-    twitter_mask = np.array(Image.open(args.mask)) if args.mask else None
+    if args.mask:
+        mask_img = Image.open(args.mask)
+        w, h = mask_img.size
+        ratio = min(3840 / w, 2160 / h)
+        mask_img = mask_img.resize((int(w * ratio), int(h * ratio)), Image.LANCZOS)
+        twitter_mask = np.array(mask_img)
+    else:
+        twitter_mask = None
 
     if transparent == "yes":
         wCloud = WordCloud(
@@ -212,6 +219,7 @@ def main():
             min_font_size=1,
             max_font_size=20,
             relative_scaling=1,
+            max_words=1000,
             colormap=scheme['colormap'],
         ).generate(text)
     else:
@@ -224,6 +232,7 @@ def main():
                 contour_color=scheme['contour_color'],
                 contour_width=1,
                 stopwords=stopwords,
+                max_words=1000,
                 colormap=scheme['colormap'],
             ).generate(text)
         else:
@@ -232,10 +241,14 @@ def main():
                 height=2160,
                 margin=10,
                 stopwords=stopwords,
+                max_words=1000,
                 colormap=scheme['colormap'],
             ).generate(text)
 
-    wCloud.to_file(wordcloudfile)
+    img = wCloud.to_image()
+    if not args.mask and img.size != (3840, 2160):
+        img = img.resize((3840, 2160), Image.LANCZOS)
+    img.save(wordcloudfile)
     print(f"Wordcloud saved to {wordcloudfile}")
 
     wCloud_strings = ' '.join(wCloud.words_)

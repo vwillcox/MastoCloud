@@ -5,3 +5,4 @@ Pillow
 numpy
 python-dotenv
 tqdm
+flask
