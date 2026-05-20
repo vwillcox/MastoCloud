@@ -1205,7 +1205,7 @@ def generate():
                 alt_text = ''
                 alt_file = PROJECT_ROOT / 'alttext_for_mastocloud.txt'
                 if alt_file.exists():
-                    alt_text = alt_file.read_text()
+                    alt_text = alt_file.read_text(encoding='utf-8')
                 yield json.dumps({'type': 'image', 'data': img_data, 'alt_text': alt_text}) + '\n'
             else:
                 yield json.dumps({'type': 'error', 'text': 'Generation failed — check the log above.'}) + '\n'
