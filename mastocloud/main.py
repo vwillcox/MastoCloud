@@ -254,7 +254,7 @@ def main():
     wCloud_strings = ' '.join(wCloud.words_)
     output_string = limit_string_length(alt_pretext + wCloud_strings)
     filename = "alttext_for_mastocloud.txt"
-    with open(filename, "w") as file:
+    with open(filename, "w", encoding="utf-8") as file:
         file.write(output_string)
 
     def top_contributors(statuses, top_words, max_users=5):
